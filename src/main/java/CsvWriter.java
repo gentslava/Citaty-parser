@@ -4,9 +4,11 @@ import java.io.IOException;
 
 public class CsvWriter { // Класс для записи в CSV файл
     private BufferedWriter writer;
+    private String separator;
 
-    protected CsvWriter(String fileName) throws IOException {
+    protected CsvWriter(String fileName, String separator) throws IOException {
         writer = new BufferedWriter(new FileWriter(fileName));
+        this.separator = separator;
     }
 
     protected void finalize() throws IOException {
@@ -17,7 +19,7 @@ public class CsvWriter { // Класс для записи в CSV файл
         StringBuilder sb = new StringBuilder();
         for (String column : columns) {
             sb.append(column);
-            sb.append(';');
+            sb.append(separator);
         }
         sb.append('\n');
         writer.write(sb.toString());

@@ -26,7 +26,7 @@ public class Crawler {
         dropDB();
         createIndexTables();
 
-        csvWriter = new CsvWriter("test.csv");
+        csvWriter = new CsvWriter("Done/test.csv", ",");
         csvWriter.writeToCSV("Author", "Text", "Tags");
     }
 
@@ -181,6 +181,20 @@ public class Crawler {
         return html_doc;
     }
 
+    /* Обработка статей */
+    private void saveArticle(Document html_doc, Element article) throws IOException {
+        String author = article.select("a[title=\"Автор цитаты\"]").text();
+        if (author.length() == 0) author = html_doc.head().select("title").text().split(": ")[0];
+        String quote = article.select("p").first().text();
+        quote = "\"" + quote + "\"";
+        Elements tagsHTML = article.select(".node__topics a");
+        String tags = "";
+        for (Element tag : tagsHTML) tags += tag.text() + ",";
+        if (tags.length() > 0) tags = tags.substring(0, tags.length() - 1);
+        tags = "\"" + tags + "\"";
+        csvWriter.writeToCSV(author, quote, tags);
+    }
+
     /* Индексирование страницы */
     private List<String> addToIndex(String URL, String URLstart) throws Exception {
         if (debug) System.out.println("\t\tИндексирование страницы");
@@ -200,16 +214,7 @@ public class Crawler {
                 Element content = html_doc.select("#content").first();
                 removeComments(content);
                 Elements articles = content.select("article");
-                // Обработка статей
-                for (Element article : articles) {
-                    String author = article.select("a[title=\"Автор цитаты\"]").text();
-                    String quote = article.select("p").first().text();
-                    String tags = "";
-                    Elements tagsHTML = article.select(".node__topics a");
-                    for (Element tag : tagsHTML) tags += tag.text() + ", ";
-                    if (tags.length() > 0) tags = tags.substring(0, tags.length() - 2);
-                    csvWriter.writeToCSV(author, quote, tags);
-                }
+                for (Element article : articles) saveArticle(html_doc, article);
 
                 // Получить все ссылки на следующие страницы
                 Elements links = html_doc.select(".pager a");
